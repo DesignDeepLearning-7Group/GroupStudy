@@ -407,18 +407,21 @@ z_total = (
 z_line = drop_same_by_key.groupby("생산라인")["온도"].transform(
     lambda x: (x - x.mean()) / x.std(ddof=0)
 )
-print("\n전체기준 z-score 3기준 : ", (abs(z_total) > 3).sum())
-print("전체기준 z-score 2기준 : ", (abs(z_total) > 2).sum())
-print("라인기준 z-score 3기준 : ", (abs(z_line) > 3).sum())
-print("라인기준 z-score 2기준 : ", (abs(z_line) > 2).sum())
+print(
+    "전체 기준 / 라인 기준 이상값 수 :",
+    (abs(z_total) > 2.5).sum(),
+    (abs(z_line) > 2.5).sum(),
+)
 
-print(drop_same_by_key[abs(z_line) > 3][KEY_COL + ["온도", "판정"]])
+print(drop_same_by_key[abs(z_line) > 2.5][KEY_COL + ["온도"]].sort_values("생산라인"))
+# 이런식으로 z-score를 통해 data를 빼면 3 초과인 4개 행만 빠지는 것이 아닌
+# Null까지 포함해 10개의 행이 빠짐
 # print(drop_same_by_key.shape)
-drop_by_z = drop_same_by_key[abs(z_line) <= 3]
+# drop_by_z = drop_same_by_key[abs(z_line) <= 3]
 # print(drop_by_z.shape)
+drop_by_z = drop_same_by_key[~(abs(z_line) > 2.5)].copy()
 
 print(drop_same_by_key.groupby("생산라인")["온도"].mean())
-# print(drop_by_z.groupby("생산라인")["온도"].mean())
 # 생산라인
 # A라인    73.346316
 # B라인    84.852931
@@ -448,6 +451,32 @@ print(drop_same_by_key.groupby("생산라인")["온도"].mean())
 # [멘티에게 한 문장으로]
 #   "결측을 채우기 전에 이상값부터 봐야 하는 이유는 ..."
 
+diff_degree_by_z = pd.DataFrame(
+    {
+        "이상값 포함": drop_same_by_key.groupby("생산라인")["온도"].mean(),
+        "이상값 제외": drop_by_z.groupby("생산라인")["온도"].mean(),
+        "차이": drop_same_by_key.groupby("생산라인")["온도"].mean()
+        - drop_by_z.groupby("생산라인")["온도"].mean(),
+    }
+)
+print(diff_degree_by_z)
+
+drop_same_by_key["온도"] = drop_same_by_key["온도"].fillna(
+    drop_by_z.groupby("생산라인")["온도"].transform("mean")
+)
+drop_same_by_key["압력"] = drop_same_by_key["압력"].fillna(
+    drop_same_by_key.groupby("생산라인")["압력"].transform("median")
+)
+drop_same_by_key["진동"] = drop_same_by_key["진동"].fillna(
+    drop_same_by_key.groupby("생산라인")["진동"].transform("median")
+)
+fillna_by_line = drop_same_by_key.copy()
+
+print(fillna_by_line.isnull().sum())
+print(fillna_by_line.groupby("생산라인")["온도"].mean())
+print(menti.groupby("생산라인")["온도"].mean())
+# 결측을 채우기 전에 이상값부터 봐야 하는 이유는
+# 평균 및 중간값이 이상값에 영향을 받기 때문
 
 # ----------------------------------------
 # 문제 5. 한 번 걸러내고 끝내면 안 된다
@@ -468,6 +497,39 @@ print(drop_same_by_key.groupby("생산라인")["온도"].mean())
 # [멘티에게 한 문장으로]
 #   "큰 이상값 하나가 표준편차를 부풀려서 작은 이상값을 ..."
 
+press_out_z_score = fillna_by_line.copy()
+# 1차
+print(press_out_z_score.groupby("생산라인")["압력"].std(ddof=0))
+z_line = press_out_z_score.groupby("생산라인")["압력"].transform(
+    lambda x: (x - x.mean()) / x.std(ddof=0)
+)
+print(press_out_z_score[abs(z_line) > 3])
+
+press_median_by_line = press_out_z_score.groupby("생산라인")["압력"].transform("median")
+# df.loc[행조건, 열조건]
+press_out_z_score.loc[abs(z_line) > 3, "압력"] = press_median_by_line[abs(z_line) > 3]
+
+# 2차
+# C라인 표준편차 1.253231 => 0.231911
+print(press_out_z_score.groupby("생산라인")["압력"].std(ddof=0))
+z_line = press_out_z_score.groupby("생산라인")["압력"].transform(
+    lambda x: (x - x.mean()) / x.std(ddof=0)
+)
+# z-score는 표준편차가 작아지면 평균과의 차이가 적어도 커진다.
+print(press_out_z_score[abs(z_line) > 3])
+
+press_median_by_line = press_out_z_score.groupby("생산라인")["압력"].transform("median")
+press_out_z_score.loc[abs(z_line) > 3, "압력"] = press_median_by_line[abs(z_line) > 3]
+
+# 3차
+print(press_out_z_score.groupby("생산라인")["압력"].std(ddof=0))
+z_line = press_out_z_score.groupby("생산라인")["압력"].transform(
+    lambda x: (x - x.mean()) / x.std(ddof=0)
+)
+print(press_out_z_score[abs(z_line) > 3])
+
+print("압력 z-score 이상값 처리 전 : ", fillna_by_line.shape)
+print("압력 z-score 이상값 처리 후 : ", press_out_z_score.shape)
 
 # ----------------------------------------
 # 문제 6. 같은 행인데 스케일 값이 다르다
@@ -491,6 +553,49 @@ print(drop_same_by_key.groupby("생산라인")["온도"].mean())
 # [멘티에게 한 문장으로]
 #   "같은 A라인 기록인데 0.061이 아니라 0.536으로 찍힌 이유는 ..."
 
+sensor = press_out_z_score[["온도", "진동", "회전수", "압력"]]
+minn = sensor.min()
+maxx = sensor.max()
+
+# 정규화 시키기
+form = round((sensor - minn) / (maxx - minn), 4)
+mentor_normal = pd.concat([press_out_z_score[["검사일시", "생산라인"]], form], axis=1)
+
+print(mentor_normal.shape)
+print(menti_normal.shape)
+
+compare_normal = pd.merge(
+    menti_normal,
+    mentor_normal,
+    on=["검사일시", "생산라인"],
+    suffixes=("_멘티", "_멘토"),
+)
+for col in SENSOR_COL:
+    compare_normal[f"{col}_차이"] = abs(
+        compare_normal[f"{col}_멘티"] - compare_normal[f"{col}_멘토"]
+    )
+
+diff_cols = [f"{col}_차이" for col in SENSOR_COL]
+print(compare_normal[diff_cols].max())
+print((compare_normal[diff_cols] > 0.05).sum())
+print(
+    compare_normal.sort_values("온도_차이", ascending=False).head(4)[
+        ["생산라인", "온도_멘티", "온도_멘토", "온도_차이"]
+    ]
+)
+compare_mean = pd.concat(
+    [
+        menti_normal.groupby("생산라인")["온도"].mean().rename("온도_멘티"),
+        mentor_normal.groupby("생산라인")["온도"].mean().rename("온도_멘토"),
+    ],
+    axis=1,
+)
+print(compare_mean)
+# 결측 온도(null)를 어떤 값으로 채웠는가.
+# 멘티는 A라인 온도 결측값을 전체 평균 84.4도로 변경
+# 멘토는 결측값을 생산라인별 평균으로 변경
+# 멘티 온도는 결측값이 정규화 했을 때 0.5364로 전체 평균에 가까움
+# 멘토 온도는 결측값이 생산라인에 따라 다르며 A라인은 0.0612으로 라인별 평균에 가까움
 
 # ----------------------------------------
 # 문제 7. 스케일 기준은 학습에서만 잡는다
@@ -513,6 +618,53 @@ print(drop_same_by_key.groupby("생산라인")["온도"].mean())
 # [멘티에게 한 문장으로]
 #   "테스트 값이 1을 넘은 건 잘못된 게 아니라 ..."
 
+# 시드 6으로 행을 섞은 뒤 6:2:2 비율로 나눈다.
+shuffled = press_out_z_score.sample(frac=1, random_state=6).reset_index(drop=True)
+train_end = int(len(shuffled) * 0.6)
+valid_end = int(len(shuffled) * 0.8)
+
+train = shuffled.iloc[:train_end].copy()
+valid = shuffled.iloc[train_end:valid_end].copy()
+test = shuffled.iloc[valid_end:].copy()
+print(train.shape, valid.shape, test.shape)
+
+# 스케일 기준은 전체 데이터가 아니라 학습 데이터에서만 구한다.
+train_scale = pd.DataFrame(
+    {
+        "min": train[SENSOR_COL].min(),
+        "max": train[SENSOR_COL].max(),
+    }
+)
+whole_scale = pd.DataFrame(
+    {
+        "min": shuffled[SENSOR_COL].min(),
+        "max": shuffled[SENSOR_COL].max(),
+    }
+)
+print(pd.concat({"학습 기준": train_scale, "전체 기준": whole_scale}, axis=1))
+
+train_scale.to_csv("스케일링기준.csv", encoding="utf-8-sig")
+
+# 같은 테스트 데이터를 전체 기준과 학습 기준으로 각각 변환한다.
+test_scaled_whole = (test[SENSOR_COL] - whole_scale["min"]) / (
+    whole_scale["max"] - whole_scale["min"]
+)
+test_scaled_train = (test[SENSOR_COL] - train_scale["min"]) / (
+    train_scale["max"] - train_scale["min"]
+)
+
+whole_outside = ((test_scaled_whole < 0) | (test_scaled_whole > 1)).sum().sum()
+train_outside = ((test_scaled_train < 0) | (test_scaled_train > 1)).sum().sum()
+print(whole_outside, train_outside)
+
+# 데이터가 스케일 기준의 최소값, 최대값으로 사용되었는지 확인
+whole_boundary = ((test_scaled_whole == 0) | (test_scaled_whole == 1)).sum().sum()
+train_boundary = ((test_scaled_train == 0) | (test_scaled_train == 1)).sum().sum()
+print(whole_boundary, train_boundary)
+print(test_scaled_train.max())
+
+# 테스트 값이 1을 넘는 것은 학습 데이터의 범위를 벗어난 새 값이라는 뜻이며,
+# 테스트 정보를 미리 보지 않고 기준을 만들었으므로 정상적인 결과이다.
 
 # ----------------------------------------
 # 문제 8. 새 배치가 들어왔다
@@ -539,6 +691,65 @@ print(drop_same_by_key.groupby("생산라인")["온도"].mean())
 #
 # [멘티에게 한 문장으로]
 #   "처음 보는 라인이 들어왔을 때 기존 기준을 그대로 쓰면 ..."
+
+# 저장한 학습 데이터의 스케일 기준을 다시 읽는다.
+saved_scale = pd.read_csv("스케일링기준.csv", index_col=0, encoding="utf-8-sig")
+batch2 = pd.read_csv("설비배치2.csv", encoding="utf-8-sig")
+# batch2["진동"] = pd.to_numeric(batch2["진동"], errors="coerce")
+
+# 배치2의 라인 구성과 배치1에 없던 라인을 확인한다.
+print(batch2["생산라인"].value_counts().to_dict())
+# D라인 추가. 각각 10개씩
+known_lines = press_out_z_score["생산라인"].unique()  # np.array
+unknown_mask = ~batch2["생산라인"].isin(known_lines)
+unknown_lines = batch2.loc[unknown_mask, "생산라인"].unique().tolist()
+print(unknown_mask.sum(), unknown_lines)
+
+# 저장된 스케일링기준.csv로 min-max scaling
+batch2_scaled = (batch2[SENSOR_COL] - saved_scale["min"]) / (
+    saved_scale["max"] - saved_scale["min"]
+)
+batch2_temp_range = (
+    pd.concat([batch2[["생산라인"]], batch2_scaled[["온도"]]], axis=1)
+    .groupby("생산라인")["온도"]
+    .agg(["min", "max"])
+)
+print(batch2_temp_range)
+
+# 기존 세 라인만 코드가 붙으며, 처음 보는 라인은 결측 코드가 된다.
+line_code_map = {"A라인": 0, "B라인": 1, "C라인": 2}
+batch2["라인코드"] = batch2["생산라인"].map(line_code_map)
+print(batch2["라인코드"].isna().sum())  # D라인 변환 불가
+
+# 처음 보는 라인은 별도 검토 대상으로 빼고 기존 라인만 모델 입력 대상으로 삼는다.
+batch2_known = batch2.loc[~unknown_mask].copy()
+batch2_known_scaled = (batch2_known[SENSOR_COL] - saved_scale["min"]) / (
+    saved_scale["max"] - saved_scale["min"]
+)
+known_outside = ((batch2_known_scaled < 0) | (batch2_known_scaled > 1)).sum().sum()
+print(known_outside)
+print(
+    pd.DataFrame({"min": batch2_known_scaled.min(), "max": batch2_known_scaled.max()})
+)
+
+# 저장된 동일 기준을 다시 적용해도 결과가 완전히 같은지 확인한다.
+# batch2_known_scaled_again = (batch2_known[SENSOR_COL] - saved_scale["min"]) / (
+#     saved_scale["max"] - saved_scale["min"]
+# )
+# print(batch2_known_scaled.equals(batch2_known_scaled_again))
+# 이걸 왜해!
+
+# 문제 5까지 정리한 배치1 결과를 최종 파일로 저장하고 다시 검증한다.
+press_out_z_score.to_csv("정제결과_최종.csv", index=False, encoding="utf-8-sig")
+final_result = pd.read_csv("정제결과_최종.csv", encoding="utf-8-sig")
+print(
+    final_result.shape,
+    final_result.isnull().sum().sum(),
+    final_result["생산라인"].value_counts().to_dict(),
+)
+
+# 처음 보는 라인이 들어왔을 때 기존 기준을 그대로 쓰면 매우 큰 변환값과
+# 없는 라인코드가 생길 수 있으므로, 모델에 넣지 말고 별도로 분리해 검토해야 한다.
 
 
 # ----------------------------------------
