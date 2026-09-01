@@ -1,242 +1,242 @@
-# ============================================================
-# [멘티 과제] 설비 점검 데이터 정제 · 전처리
-# ============================================================
-#
-# 여러분이 할 일은 '받은 데이터를 분석할 수 있는 상태로 만들어 멘토에게 넘기는 것'입니다.
-# 지시문을 그대로 따라가면 됩니다. 기대 출력이 적혀 있으니 스스로 채점하세요.
-# 숫자가 다르면 앞 문제로 돌아가 확인하고, 그래도 안 맞으면 멘토에게 물어보세요.
-#
-# 최종 산출물: 정제결과_멘티.csv  (문제 10에서 만듭니다)
-#
-# 필요한 파일: 설비배치1.csv (같은 폴더에 두세요)
-#   검사일시 / 생산라인(A·B·C) / 설비번호 / 온도 / 진동 / 회전수 / 압력 / 판정
+# # ============================================================
+# # [멘티 과제] 설비 점검 데이터 정제 · 전처리
+# # ============================================================
+# #
+# # 여러분이 할 일은 '받은 데이터를 분석할 수 있는 상태로 만들어 멘토에게 넘기는 것'입니다.
+# # 지시문을 그대로 따라가면 됩니다. 기대 출력이 적혀 있으니 스스로 채점하세요.
+# # 숫자가 다르면 앞 문제로 돌아가 확인하고, 그래도 안 맞으면 멘토에게 물어보세요.
+# #
+# # 최종 산출물: 정제결과_멘티.csv  (문제 10에서 만듭니다)
+# #
+# # 필요한 파일: 설비배치1.csv (같은 폴더에 두세요)
+# #   검사일시 / 생산라인(A·B·C) / 설비번호 / 온도 / 진동 / 회전수 / 압력 / 판정
 
-import numpy as np
-import pandas as pd
+# import numpy as np
+# import pandas as pd
 
-df = pd.read_csv("설비배치1.csv", encoding="utf-8-sig")
-sensor_col = ["온도", "진동", "회전수", "압력"]
-
-
-# ----------------------------------------
-# 문제 1. 받은 파일을 열고 상태를 파악한다
-# ----------------------------------------
-# 설비배치1.csv 를 읽어 표 크기, 결측이 있는 열과 개수, 진동 열 첫 값의 자료형 이름,
-# 판정 열의 값별 개수를 차례로 출력하세요. 한글이 깨지지 않게 읽습니다.
-# 기대 출력: (186, 8)
-#            {'온도': 6, '압력': 3}
-#            str
-#            {'정상': 119, '주의': 62, '이상': 5}
+# df = pd.read_csv("설비배치1.csv", encoding="utf-8-sig")
+# sensor_col = ["온도", "진동", "회전수", "압력"]
 
 
-null_counts = df.isnull().sum()  # 결측 있는 거 확인 , 더한 값 = 개수 확인 용
-result = null_counts[
-    null_counts > 0
-].to_dict()  # 결측 있는것 (1개라도) 딕셔너리 형태로 만들기
-
-print(df.shape)
-print(result)
-print(type(df["진동"][0]).__name__)  # 진동 열 첫값 자료형 확인
-print(df["판정"].value_counts().to_dict())  # 판정 값 개수 딕셔너리로 바꾸기
-
-# ----------------------------------------
-# 문제 2. 숫자로 저장되지 않은 열 고치기
-# ----------------------------------------
-# 진동 열을 숫자로 바꾸세요. 숫자로 못 바꾸는 값은 결측으로 만듭니다.
-# 바꾼 뒤 진동 열의 결측 개수와 평균(소수 둘째 자리)을 출력하세요.
-# 기대 출력: 3
-#            4.19
-
-df["진동"] = pd.to_numeric(
-    df["진동"], errors="coerce"
-)  # numeric 숫자로 못바꾸는거 결측으로 만들기
-null_counts = df["진동"].isnull().sum()  # 결측 수 확인
-
-print(null_counts)
-print(round(df["진동"].mean(), 2))
+# # ----------------------------------------
+# # 문제 1. 받은 파일을 열고 상태를 파악한다
+# # ----------------------------------------
+# # 설비배치1.csv 를 읽어 표 크기, 결측이 있는 열과 개수, 진동 열 첫 값의 자료형 이름,
+# # 판정 열의 값별 개수를 차례로 출력하세요. 한글이 깨지지 않게 읽습니다.
+# # 기대 출력: (186, 8)
+# #            {'온도': 6, '압력': 3}
+# #            str
+# #            {'정상': 119, '주의': 62, '이상': 5}
 
 
-# ----------------------------------------
-# 문제 3. 중복 행 제거
-# ----------------------------------------
-# 완전히 같은 행이 몇 개인지 출력하고, 지운 뒤 표 크기를 출력하세요.
-# 인덱스는 0부터 다시 매깁니다.
-# 기대 출력: 4
-#            (182, 8)
+# null_counts = df.isnull().sum()  # 결측 있는 거 확인 , 더한 값 = 개수 확인 용
+# result = null_counts[
+#     null_counts > 0
+# ].to_dict()  # 결측 있는것 (1개라도) 딕셔너리 형태로 만들기
 
-df_modify = df.drop_duplicates().reset_index(
-    drop=True
-)  # 중복지우기 , 인덱스 다시 만들기
+# print(df.shape)
+# print(result)
+# print(type(df["진동"][0]).__name__)  # 진동 열 첫값 자료형 확인
+# print(df["판정"].value_counts().to_dict())  # 판정 값 개수 딕셔너리로 바꾸기
 
-print(df.duplicated().sum())  # 중복확인
-print(df_modify.shape)
+# # ----------------------------------------
+# # 문제 2. 숫자로 저장되지 않은 열 고치기
+# # ----------------------------------------
+# # 진동 열을 숫자로 바꾸세요. 숫자로 못 바꾸는 값은 결측으로 만듭니다.
+# # 바꾼 뒤 진동 열의 결측 개수와 평균(소수 둘째 자리)을 출력하세요.
+# # 기대 출력: 3
+# #            4.19
 
-# ----------------------------------------
-# 문제 4. 결측 채우기
-# ----------------------------------------
-# 온도는 온도 열 전체 평균으로, 압력은 압력 열 전체 중앙값으로,
-# 진동은 진동 열 전체 평균으로 채우세요.
-# 채운 뒤 센서 4열의 남은 결측 총 개수를 출력하고,
-# 채우는 데 쓴 온도 평균과 압력 중앙값을 소수 둘째 자리로 한 줄에 출력하세요.
-# 기대 출력: 0
-#            84.4 5.48
+# df["진동"] = pd.to_numeric(
+#     df["진동"], errors="coerce"
+# )  # numeric 숫자로 못바꾸는거 결측으로 만들기
+# null_counts = df["진동"].isnull().sum()  # 결측 수 확인
 
-# 결측에 넣을 값 만들기
-temp = df_modify["온도"].mean().round(2)
-press = df_modify["압력"].median().round(2)
-vib = df_modify["진동"].mean().round(2)
-
-# 결측에 평균 , 중앙값 넣기
-df_modify["온도"] = df_modify["온도"].fillna(temp)
-df_modify["압력"] = df_modify["압력"].fillna(press)
-df_modify["진동"] = df_modify["진동"].fillna(vib)
-
-# 3열 결측값 확인하기
-print(df_modify[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
-print(round((temp), 2), round(press, 2))
-
-# ----------------------------------------
-# 문제 5. 생산라인별 요약
-# ----------------------------------------
-# 생산라인별 센서 4종 평균(소수 둘째 자리)을 표로 출력하고,
-# 라인별 검사 건수를 라인 이름 순으로 출력하세요.
-# 기대 출력:          온도    진동      회전수    압력
-#            생산라인
-#            A라인   73.90  3.02  1449.64  4.02
-#            B라인   84.88  4.19  1601.74  5.49
-#            C라인   94.40  5.38  1751.33  7.08
-#            {'A라인': 60, 'B라인': 62, 'C라인': 60}
-
-# 생산라인(a,b,c가 있음) 기준으로 온도 진동 회전수 압력의 평균 구하기
-print(df_modify.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
-# 생산라인 기준으로 온도의 검사건수 확인하기
-print(df_modify.groupby("생산라인")["온도"].count().to_dict())
-
-# ----------------------------------------
-# 문제 6. z-점수로 온도 이상 찾기
-# ----------------------------------------
-# 온도 열 전체의 평균과 표준편차(ddof=0)를 소수 둘째 자리로 한 줄에 출력하세요.
-# 이어서 z-점수 절댓값이 3을 넘는 개수와 2를 넘는 개수를 한 줄에 출력하세요.
-# 기대 출력: 84.4 9.08
-#            0 0
-
-# z score 구하기
-z = (df_modify["온도"] - df_modify["온도"].mean()) / df_modify["온도"].std()
-# 이상값 확인
-abs(z) > 3, abs(z) > 2
-
-# 결측을 채워넣은 표에 평균 , 표준편착 구하기
-print(round(df_modify["온도"].mean(), 2), round(df_modify["온도"].std(ddof=0), 2))
-# 절대값으로 z score 확인하고 3넘고 2 넘는 개수 구하기
-print((abs(z) > 3).sum(), (abs(z) > 2).sum())
-
-# ----------------------------------------
-# 문제 7. IQR로 압력 이상 찾기
-# ----------------------------------------
-# 압력 열 전체의 아래·위 울타리(임계값 1.5)를 소수 둘째 자리로 한 줄에 출력하고,
-# 울타리를 벗어난 개수를 출력하세요.
-# 이어서 걸린 행이 어느 생산라인에서 나왔는지 개수를 출력하세요.
-# 기대 출력: 0.23 10.56
-#            3
-#            {'C라인': 3}
-
-# iqr 구하기
-q1 = df_modify["압력"].quantile(0.25)
-q3 = df_modify["압력"].quantile(0.75)
-
-iqr = round(q3 - q1, 2)
-
-# iqr울타리 만들기
-low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+# print(null_counts)
+# print(round(df["진동"].mean(), 2))
 
 
-print(round(low, 2), round(high, 2))
-# iqr을 벗어난 값 확인하기
-print(df_modify["압력"][(df_modify["압력"] < low) | (df_modify["압력"] > high)].count())
+# # ----------------------------------------
+# # 문제 3. 중복 행 제거
+# # ----------------------------------------
+# # 완전히 같은 행이 몇 개인지 출력하고, 지운 뒤 표 크기를 출력하세요.
+# # 인덱스는 0부터 다시 매깁니다.
+# # 기대 출력: 4
+# #            (182, 8)
 
-line = df_modify[(df_modify["압력"] < low) | (df_modify["압력"] > high)]
-# iqr벗어난 값들 생산라인 기준으로 압력(벗어난)값 개수구하고 딕셔너리로 만들기
-print(line.groupby("생산라인")["압력"].count().to_dict())
+# df_modify = df.drop_duplicates().reset_index(
+#     drop=True
+# )  # 중복지우기 , 인덱스 다시 만들기
 
-# ----------------------------------------
-# 문제 8. 이상으로 판정된 행 제거
-# ----------------------------------------
-# 문제 7에서 걸린 행을 표에서 제거하세요.
-# 제거 전 라인별 행 수, 제거 후 라인별 행 수, 그리고 최종 표 크기를 차례로 출력하세요.
-# 인덱스는 다시 매깁니다.
-# 기대 출력: {'A라인': 60, 'B라인': 62, 'C라인': 60}
-#            {'A라인': 60, 'B라인': 62, 'C라인': 57}
-#            (179, 8)
+# print(df.duplicated().sum())  # 중복확인
+# print(df_modify.shape)
 
-# 제거 하기
-df_result = df_modify.drop(line.index)
+# # ----------------------------------------
+# # 문제 4. 결측 채우기
+# # ----------------------------------------
+# # 온도는 온도 열 전체 평균으로, 압력은 압력 열 전체 중앙값으로,
+# # 진동은 진동 열 전체 평균으로 채우세요.
+# # 채운 뒤 센서 4열의 남은 결측 총 개수를 출력하고,
+# # 채우는 데 쓴 온도 평균과 압력 중앙값을 소수 둘째 자리로 한 줄에 출력하세요.
+# # 기대 출력: 0
+# #            84.4 5.48
 
-# 인덱스 다시 매김
-df_result = df_result.reset_index(drop=True)
-# 결측만 채운 표 , 중복 제거한 표 값 개수 비교
-print(df_modify["생산라인"].value_counts().to_dict())
-print(df_result["생산라인"].value_counts().to_dict())
-print(df_result.shape)
+# # 결측에 넣을 값 만들기
+# temp = df_modify["온도"].mean().round(2)
+# press = df_modify["압력"].median().round(2)
+# vib = df_modify["진동"].mean().round(2)
+
+# # 결측에 평균 , 중앙값 넣기
+# df_modify["온도"] = df_modify["온도"].fillna(temp)
+# df_modify["압력"] = df_modify["압력"].fillna(press)
+# df_modify["진동"] = df_modify["진동"].fillna(vib)
+
+# # 3열 결측값 확인하기
+# print(df_modify[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
+# print(round((temp), 2), round(press, 2))
+
+# # ----------------------------------------
+# # 문제 5. 생산라인별 요약
+# # ----------------------------------------
+# # 생산라인별 센서 4종 평균(소수 둘째 자리)을 표로 출력하고,
+# # 라인별 검사 건수를 라인 이름 순으로 출력하세요.
+# # 기대 출력:          온도    진동      회전수    압력
+# #            생산라인
+# #            A라인   73.90  3.02  1449.64  4.02
+# #            B라인   84.88  4.19  1601.74  5.49
+# #            C라인   94.40  5.38  1751.33  7.08
+# #            {'A라인': 60, 'B라인': 62, 'C라인': 60}
+
+# # 생산라인(a,b,c가 있음) 기준으로 온도 진동 회전수 압력의 평균 구하기
+# print(df_modify.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
+# # 생산라인 기준으로 온도의 검사건수 확인하기
+# print(df_modify.groupby("생산라인")["온도"].count().to_dict())
+
+# # ----------------------------------------
+# # 문제 6. z-점수로 온도 이상 찾기
+# # ----------------------------------------
+# # 온도 열 전체의 평균과 표준편차(ddof=0)를 소수 둘째 자리로 한 줄에 출력하세요.
+# # 이어서 z-점수 절댓값이 3을 넘는 개수와 2를 넘는 개수를 한 줄에 출력하세요.
+# # 기대 출력: 84.4 9.08
+# #            0 0
+
+# # z score 구하기
+# z = (df_modify["온도"] - df_modify["온도"].mean()) / df_modify["온도"].std()
+# # 이상값 확인
+# abs(z) > 3, abs(z) > 2
+
+# # 결측을 채워넣은 표에 평균 , 표준편착 구하기
+# print(round(df_modify["온도"].mean(), 2), round(df_modify["온도"].std(ddof=0), 2))
+# # 절대값으로 z score 확인하고 3넘고 2 넘는 개수 구하기
+# print((abs(z) > 3).sum(), (abs(z) > 2).sum())
+
+# # ----------------------------------------
+# # 문제 7. IQR로 압력 이상 찾기
+# # ----------------------------------------
+# # 압력 열 전체의 아래·위 울타리(임계값 1.5)를 소수 둘째 자리로 한 줄에 출력하고,
+# # 울타리를 벗어난 개수를 출력하세요.
+# # 이어서 걸린 행이 어느 생산라인에서 나왔는지 개수를 출력하세요.
+# # 기대 출력: 0.23 10.56
+# #            3
+# #            {'C라인': 3}
+
+# # iqr 구하기
+# q1 = df_modify["압력"].quantile(0.25)
+# q3 = df_modify["압력"].quantile(0.75)
+
+# iqr = round(q3 - q1, 2)
+
+# # iqr울타리 만들기
+# low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
 
 
-# ----------------------------------------
-# 문제 9. 0~1로 스케일 맞추고 파일로 남기기
-# ----------------------------------------
-# 센서 4열을 표 전체의 최솟값·최댓값을 기준으로 Min-Max 정규화하세요.
-# 열별 최솟값, 최댓값, 평균을 소수 셋째 자리로 차례로 출력하세요.
-# 이어서 검사일시·생산라인 두 열 뒤에 정규화한 센서 4열(소수 넷째 자리)을 붙여
-# 정규화_멘티.csv 로 저장하고, 다시 읽어 표 크기를 출력하세요.
-# 이 파일도 멘토에게 함께 넘깁니다.
-# 기대 출력: {'온도': 0.0, '진동': 0.0, '회전수': 0.0, '압력': 0.0}
-#            {'온도': 1.0, '진동': 1.0, '회전수': 1.0, '압력': 1.0}
-#            {'온도': 0.529, '진동': 0.494, '회전수': 0.495, '압력': 0.39}
-#            (179, 6)
-# 4개만 들어있는 표
-sensor = df_result[["온도", "진동", "회전수", "압력"]]
-minn = sensor.min()
-maxx = sensor.max()
+# print(round(low, 2), round(high, 2))
+# # iqr을 벗어난 값 확인하기
+# print(df_modify["압력"][(df_modify["압력"] < low) | (df_modify["압력"] > high)].count())
 
-# 정규화 시키기
-form = round((sensor - minn) / (maxx - minn), 4)
+# line = df_modify[(df_modify["압력"] < low) | (df_modify["압력"] > high)]
+# # iqr벗어난 값들 생산라인 기준으로 압력(벗어난)값 개수구하고 딕셔너리로 만들기
+# print(line.groupby("생산라인")["압력"].count().to_dict())
 
-# print(df_normal.head())
-print(round(form.min(), 3).to_dict())
-print(round(form.max(), 3).to_dict())
-print(round(form.mean(), 3).to_dict())
+# # ----------------------------------------
+# # 문제 8. 이상으로 판정된 행 제거
+# # ----------------------------------------
+# # 문제 7에서 걸린 행을 표에서 제거하세요.
+# # 제거 전 라인별 행 수, 제거 후 라인별 행 수, 그리고 최종 표 크기를 차례로 출력하세요.
+# # 인덱스는 다시 매깁니다.
+# # 기대 출력: {'A라인': 60, 'B라인': 62, 'C라인': 60}
+# #            {'A라인': 60, 'B라인': 62, 'C라인': 57}
+# #            (179, 8)
 
-# 결측아닌것도 구해야해서 concat으로 합쳐줌
-df_normal = pd.concat([df_result[["검사일시", "생산라인"]], form], axis=1)
-df_normal.to_csv("정규화_멘티.csv", index=False)
+# # 제거 하기
+# df_result = df_modify.drop(line.index)
 
-end = pd.read_csv("정규화_멘티.csv")
-print(end.shape)
+# # 인덱스 다시 매김
+# df_result = df_result.reset_index(drop=True)
+# # 결측만 채운 표 , 중복 제거한 표 값 개수 비교
+# print(df_modify["생산라인"].value_counts().to_dict())
+# print(df_result["생산라인"].value_counts().to_dict())
+# print(df_result.shape)
 
-# ----------------------------------------
-# 문제 10. 라인 인코딩하고 저장하기
-# ----------------------------------------
-# 생산라인을 A라인 0, B라인 1, C라인 2 로 바꾼 라인코드 열을 만드세요.
-# 검사일시, 생산라인, 라인코드, 온도, 진동, 회전수, 압력, 판정 순으로 열을 골라
-# 정제결과_멘티.csv 로 저장하세요(인덱스 없이, 한글 안 깨지게).
-# 저장한 파일을 다시 읽어 표 크기·결측 총 개수·중복 개수를 한 줄에,
-# 열 이름 목록을 한 줄에 출력하세요.
-# 이 파일을 멘토에게 넘기면 여러분의 몫은 끝입니다.
-# 기대 출력: (179, 8) 0 0
-#            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
 
-# repalce는 결과가 한줄로나와서 표에 넣어줘야함
-df_result["라인코드"] = df_result["생산라인"].replace(
-    {"A라인": 0, "C라인": 2, "B라인": 1}
-)
+# # ----------------------------------------
+# # 문제 9. 0~1로 스케일 맞추고 파일로 남기기
+# # ----------------------------------------
+# # 센서 4열을 표 전체의 최솟값·최댓값을 기준으로 Min-Max 정규화하세요.
+# # 열별 최솟값, 최댓값, 평균을 소수 셋째 자리로 차례로 출력하세요.
+# # 이어서 검사일시·생산라인 두 열 뒤에 정규화한 센서 4열(소수 넷째 자리)을 붙여
+# # 정규화_멘티.csv 로 저장하고, 다시 읽어 표 크기를 출력하세요.
+# # 이 파일도 멘토에게 함께 넘깁니다.
+# # 기대 출력: {'온도': 0.0, '진동': 0.0, '회전수': 0.0, '압력': 0.0}
+# #            {'온도': 1.0, '진동': 1.0, '회전수': 1.0, '압력': 1.0}
+# #            {'온도': 0.529, '진동': 0.494, '회전수': 0.495, '압력': 0.39}
+# #            (179, 6)
+# # 4개만 들어있는 표
+# sensor = df_result[["온도", "진동", "회전수", "압력"]]
+# minn = sensor.min()
+# maxx = sensor.max()
 
-# 설비번호 삭제
-df_result = df_result.drop(columns=["설비번호"])
-# 저장 하고 다시 읽어보기
-df_result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+# # 정규화 시키기
+# form = round((sensor - minn) / (maxx - minn), 4)
 
-read = pd.read_csv("정제결과_멘티.csv")
-# 비어있는값 ,중복된 값 , 확인 해서 리스트 만들기
-print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
-print(read.columns.to_list())
+# # print(df_normal.head())
+# print(round(form.min(), 3).to_dict())
+# print(round(form.max(), 3).to_dict())
+# print(round(form.mean(), 3).to_dict())
+
+# # 결측아닌것도 구해야해서 concat으로 합쳐줌
+# df_normal = pd.concat([df_result[["검사일시", "생산라인"]], form], axis=1)
+# df_normal.to_csv("정규화_멘티.csv", index=False)
+
+# end = pd.read_csv("정규화_멘티.csv")
+# print(end.shape)
+
+# # ----------------------------------------
+# # 문제 10. 라인 인코딩하고 저장하기
+# # ----------------------------------------
+# # 생산라인을 A라인 0, B라인 1, C라인 2 로 바꾼 라인코드 열을 만드세요.
+# # 검사일시, 생산라인, 라인코드, 온도, 진동, 회전수, 압력, 판정 순으로 열을 골라
+# # 정제결과_멘티.csv 로 저장하세요(인덱스 없이, 한글 안 깨지게).
+# # 저장한 파일을 다시 읽어 표 크기·결측 총 개수·중복 개수를 한 줄에,
+# # 열 이름 목록을 한 줄에 출력하세요.
+# # 이 파일을 멘토에게 넘기면 여러분의 몫은 끝입니다.
+# # 기대 출력: (179, 8) 0 0
+# #            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
+
+# # repalce는 결과가 한줄로나와서 표에 넣어줘야함
+# df_result["라인코드"] = df_result["생산라인"].replace(
+#     {"A라인": 0, "C라인": 2, "B라인": 1}
+# )
+
+# # 설비번호 삭제
+# df_result = df_result.drop(columns=["설비번호"])
+# # 저장 하고 다시 읽어보기
+# df_result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+
+# read = pd.read_csv("정제결과_멘티.csv")
+# # 비어있는값 ,중복된 값 , 확인 해서 리스트 만들기
+# print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
+# print(read.columns.to_list())
 
 
 # ============================================================
@@ -261,8 +261,8 @@ import pandas as pd
 origin = pd.read_csv("설비배치1.csv", encoding="utf-8-sig")
 menti = pd.read_csv("정제결과_멘티.csv", encoding="utf-8-sig")
 menti_normal = pd.read_csv("정규화_멘티.csv", encoding="utf-8-sig")
-sensor_col = ["온도", "진동", "회전수", "압력"]
-key_col = ["검사일시", "생산라인", "설비번호"]
+SENSOR_COL = ["온도", "진동", "회전수", "압력"]
+KEY_COL = ["검사일시", "생산라인", "설비번호"]
 
 
 # ----------------------------------------
@@ -281,12 +281,12 @@ key_col = ["검사일시", "생산라인", "설비번호"]
 # [멘티에게 한 문장으로]
 #   "○○라인만 △행이 사라졌는데, 그 이유는 ..."
 
-origin_drop = origin.drop_duplicates()
-print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
+drop_same = origin.drop_duplicates().reset_index(drop=True)
+print(f"origin: {origin.shape} origin drop: {drop_same.shape} menti: {menti.shape}")
 print(
-    f"origin_drop column: {origin_drop.columns.to_list()}\nmenti column: {menti.columns.to_list()}"
+    f"origin_drop column: {drop_same.columns.to_list()}\nmenti column: {menti.columns.to_list()}"
 )
-print(f"\norigin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
+print(f"\norigin_drop 생산라인 \n {drop_same['생산라인'].value_counts()}")
 print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
 # origin_drop 생산라인
 #  생산라인
@@ -304,10 +304,10 @@ print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
 # C라인 60 => 57로 변경
 #   - 세 라인의 행 수가 처음부터 60개씩 균등하지 않다. 이건 또 다른 문제의 신호다
 
-print("\n온도 null : ", origin_drop["온도"].isnull().sum())
+print("\n온도 null : ", drop_same["온도"].isnull().sum())
 # 온도 null :  6
 
-origin_degree = origin_drop.dropna(subset=["온도"]).groupby("생산라인")["온도"].mean()
+origin_degree = drop_same.dropna(subset=["온도"]).groupby("생산라인")["온도"].mean()
 menti_degree = menti.groupby("생산라인")["온도"].mean()
 diff_degree = origin_degree - menti_degree
 compare_degree = pd.DataFrame(
@@ -342,6 +342,49 @@ print("\n", compare_degree.round(2))
 # [멘티에게 한 문장으로]
 #   "값이 0.03 다르면 컴퓨터는 다른 행으로 보지만, 현실에서는 ..."
 
+print(
+    "멘티 csv 검사일시, 생산라인 똑같은 행 수 : ",
+    menti[["검사일시", "생산라인"]].duplicated(keep=False).sum(),
+)
+
+drop_same["진동"] = pd.to_numeric(drop_same["진동"], errors="coerce")
+
+print(
+    "검사일시, 생산라인, 설비번호 똑같은 행 수 : ",
+    drop_same[KEY_COL].duplicated(keep=False).sum(),
+)
+
+same_dataes = drop_same[drop_same[KEY_COL].duplicated(keep=False)]
+print(same_dataes[KEY_COL + SENSOR_COL])
+drop_same_by_key = drop_same.drop_duplicates(subset=KEY_COL, keep="first")
+#                  검사일시 생산라인   설비번호     온도    진동      회전수    압력
+# 15   2026-08-24 14:00  B라인  B-101  85.93  4.26  1604.10  5.30
+# 32   2026-08-24 14:00  B라인  B-101  85.90  4.26  1604.10  5.32
+# 91   2026-08-25 15:00  B라인  B-105  86.29  4.21  1609.88  5.48
+# 179  2026-08-25 15:00  B라인  B-105  86.32  4.21  1609.88  5.46
+#   - 값이 미세하게 다르기 때문에 완전 중복 제거로는 안 걸린다. 얼마나 다른가
+
+print(
+    "고친 후 다시 확인 : ",
+    drop_same_by_key.shape,
+    drop_same_by_key["생산라인"].value_counts().to_dict(),
+)
+# 고친 후 다시 확인 :  (180, 8) {'B라인': 60, 'A라인': 60, 'C라인': 60}
+#   - 정리하고 나면 라인별 행 수가 60개씩 균등해진다
+
+not_fix = drop_same.groupby("생산라인")[SENSOR_COL].mean().round(2)
+fix = drop_same_by_key.groupby("생산라인")[SENSOR_COL].mean().round(2)
+print("\n중복 제거하지 않은 평균")
+print(not_fix)
+print("중복 평균")
+print(fix)
+print("평균 차이")
+print(not_fix - fix)
+#   - 이 행들을 그대로 두면 그 라인의 평균이 어떻게 되는가
+
+# [멘티에게 한 문장으로]
+#   "값이 0.03 다르면 컴퓨터는 다른 행으로 보지만, 현실에서는 ..."
+
 # ----------------------------------------
 # 문제 3. 이상 탐지를 다시 한다
 # ----------------------------------------
@@ -358,6 +401,30 @@ print("\n", compare_degree.round(2))
 # [멘티에게 한 문장으로]
 #   "온도 73.5도는 A라인이면 정상이지만 C라인에서는 ..."
 
+z_total = (
+    drop_same_by_key["온도"] - drop_same_by_key["온도"].mean()
+) / drop_same_by_key["온도"].std(ddof=0)
+z_line = drop_same_by_key.groupby("생산라인")["온도"].transform(
+    lambda x: (x - x.mean()) / x.std(ddof=0)
+)
+print("\n전체기준 z-score 3기준 : ", (abs(z_total) > 3).sum())
+print("전체기준 z-score 2기준 : ", (abs(z_total) > 2).sum())
+print("라인기준 z-score 3기준 : ", (abs(z_line) > 3).sum())
+print("라인기준 z-score 2기준 : ", (abs(z_line) > 2).sum())
+
+print(drop_same_by_key[abs(z_line) > 3][KEY_COL + ["온도", "판정"]])
+# print(drop_same_by_key.shape)
+drop_by_z = drop_same_by_key[abs(z_line) <= 3]
+# print(drop_by_z.shape)
+
+print(drop_same_by_key.groupby("생산라인")["온도"].mean())
+# print(drop_by_z.groupby("생산라인")["온도"].mean())
+# 생산라인
+# A라인    73.346316
+# B라인    84.852931
+# C라인    94.569492
+# Name: 온도, dtype: float64
+# 라인별 평균이 차이나므로 전체 온도의 z-score보다 라이별 z-score를 계산해야한다.
 
 # ----------------------------------------
 # 문제 4. 채우기 전에 무엇을 먼저 해야 하는가
