@@ -91,9 +91,9 @@ df["온도"] = df["온도"].fillna(temp)
 df["압력"] = df["압력"].fillna(press)
 df["진동"] = df["진동"].fillna(vib)
 
-print(df[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
+# print(df[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
 
-print(round((temp), 2), round(press, 2))
+# print(round((temp), 2), round(press, 2))
 
 # null_counts = df["온도"].isnull().sum()
 
@@ -110,6 +110,10 @@ print(round((temp), 2), round(press, 2))
 #            C라인   94.40  5.38  1751.33  7.08
 #            {'A라인': 60, 'B라인': 62, 'C라인': 60}
 
+# print(df.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
+# print(df.groupby("생산라인")["온도"].count().to_dict())
+# df.sort_values(by="생산라인", ascending=True)
+
 
 # ----------------------------------------
 # 문제 6. z-점수로 온도 이상 찾기
@@ -118,6 +122,13 @@ print(round((temp), 2), round(press, 2))
 # 이어서 z-점수 절댓값이 3을 넘는 개수와 2를 넘는 개수를 한 줄에 출력하세요.
 # 기대 출력: 84.4 9.08
 #            0 0
+
+# 또포 공부해라
+# print(round(df["온도"].mean(), 2), round(df["온도"].std(ddof=0), 2))
+z = (df["온도"] - df["온도"].mean()) / df["온도"].std()
+abs(z) > 3, abs(z) > 2
+
+# print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 
 
 # ----------------------------------------
@@ -130,6 +141,22 @@ print(round((temp), 2), round(press, 2))
 #            3
 #            {'C라인': 3}
 
+q1 = df["압력"].quantile(0.25)
+q3 = df["압력"].quantile(0.75)
+
+iqr = round(q3 - q1, 2)
+# print(iqr)
+
+low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+
+# print(round(low, 2), round(high, 2))
+# print(df["압력"][(df["압력"] < low) | (df["압력"] > high)].count())  # 찾아보세요
+
+# print(df["생산라인"][(df["압력"] < low) | (df["압력"] > high)])
+line = df[(df["압력"] < low) | (df["압력"] > high)]
+
+# line ='압력기준으로' 범위 벗어난것을 '생산라인'으로 group하고 센다음에 딕셔너리 형태로 만들기!
+# print(line.groupby("생산라인")["압력"].count().to_dict())
 
 # ----------------------------------------
 # 문제 8. 이상으로 판정된 행 제거
@@ -140,6 +167,18 @@ print(round((temp), 2), round(press, 2))
 # 기대 출력: {'A라인': 60, 'B라인': 62, 'C라인': 60}
 #            {'A라인': 60, 'B라인': 62, 'C라인': 57}
 #            (179, 8)
+
+# 제거 하기
+# print(line)
+df_drop = df.drop(line.index)
+
+df["생산라인"].value_counts().to_dict()
+# 인덱스 다시 매김
+re = df_drop.reset_index(drop=True)
+
+# print(df["생산라인"].value_counts().to_dict())
+# print(re["생산라인"].value_counts().to_dict())
+# print(re.shape)
 
 
 # ----------------------------------------
@@ -155,7 +194,29 @@ print(round((temp), 2), round(press, 2))
 #            {'온도': 0.529, '진동': 0.494, '회전수': 0.495, '압력': 0.39}
 #            (179, 6)
 
+sensor = re[["온도", "진동", "회전수", "압력"]]
+minn = sensor.min()
+maxx = sensor.max()
+# 정규화 시키기
+form = round((sensor - minn) / (maxx - minn), 4)
+# print(form.dtypes, "ss")
+# # 한번에 to_dict()로 변경하면 튜플로 봐서 오류남 하나씩 해줘야함
 
+
+# a = pd.concat([df[["검사일시", "생산라인"]], form], axis=1)
+# print(a.head())
+print(
+    round(form.min(), 3).to_dict(),
+    round(form.max(), 3).to_dict(),
+    round(form.mean(), 3).to_dict(),
+)
+
+# # 결측아닌것도 구해야해서 concat으로 합쳐줌
+result = pd.concat([re[["검사일시", "생산라인"]], form], axis=1)
+result.to_csv("정규화_멘티.csv", index=False)
+
+end = pd.read_csv("정규화_멘티.csv")
+print(end.shape)
 # ----------------------------------------
 # 문제 10. 라인 인코딩하고 저장하기
 # ----------------------------------------
@@ -167,3 +228,24 @@ print(round((temp), 2), round(press, 2))
 # 이 파일을 멘토에게 넘기면 여러분의 몫은 끝입니다.
 # 기대 출력: (179, 8) 0 0
 #            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
+
+# 한줄로나옴 (알아둬라)
+b = result["생산라인"].replace({"A라인": 0, "C라인": 2, "B라인": 1})
+
+# 원본에 넣기 열 만들어서 넣는거임
+result["라인코드"] = b
+print(result.head())
+
+# 골라라
+print(result.columns)
+# print(df.shape)
+# print(df_drop.shape)
+# print(result.shape)
+result["판정"] = df["판정"]
+print(result.head())
+
+result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+
+read = pd.read_csv("정제결과_멘티.csv")
+print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
+print(read.columns.to_list())
