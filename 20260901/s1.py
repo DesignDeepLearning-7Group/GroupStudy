@@ -141,15 +141,15 @@ after_deleting["전력"] = after_deleting["전력"].fillna(power)
 # 기대 출력: 68.38 7.86
 #            0 0
 
-print(
-    round(after_deleting["CPU온도"].mean(), 2),
-    round(after_deleting["CPU온도"].std(ddof=0), 2),
-)
+# print(
+#     round(after_deleting["CPU온도"].mean(), 2),
+#     round(after_deleting["CPU온도"].std(ddof=0), 2),
+# )
 
 z = (after_deleting["CPU온도"] - after_deleting["CPU온도"].mean()) / after_deleting[
     "CPU온도"
 ].std(ddof=0)
-print((abs(z) > 3).sum(), (abs(z) > 2).sum())
+# print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 # ----------------------------------------
 # 문제 7. IQR로 메모리 이상 찾기
 # ----------------------------------------
@@ -162,7 +162,19 @@ print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 #            3
 #            {'Z3-찰리': 3}
 
+q1 = after_deleting["메모리"].quantile(0.25)
+q3 = after_deleting["메모리"].quantile(0.75)
 
+iqr = q3 - q1
+
+low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
+# print(round(low, 2), round(high, 2))
+
+over_value = after_deleting["메모리"][
+    (after_deleting["메모리"] < low) | (after_deleting["메모리"] > high)
+]
+
+# print(over_value.count())
 # ----------------------------------------
 # 문제 8. 이상으로 판정된 행 제거
 # ----------------------------------------
@@ -174,6 +186,16 @@ print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 # 기대 출력: {'Z1-알파': 60, 'Z2-브라보': 62, 'Z3-찰리': 60}
 #            {'Z1-알파': 60, 'Z2-브라보': 62, 'Z3-찰리': 57}
 #            (179, 8)
+
+# 중복 값 제거
+remove_value = after_deleting.drop(over_value.index)
+# 인덱스 다시 매기기
+remove_value = remove_value.reset_index(drop=True)
+
+# 구역별 제거 전 행수
+# print(after_deleting["구역"].value_counts().to_dict())
+# 구역별 제거 후 행수
+# print(remove_value["구역"].value_counts().to_dict())
 
 
 # ----------------------------------------
@@ -194,6 +216,23 @@ print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 #            (179, 6)
 
 
+sensor = remove_value[["CPU온도", "전력", "응답시간", "메모리"]]
+minn = sensor.min()
+maxx = sensor.max()
+# 정규화
+normalization = (sensor - minn) / (maxx - minn)
+
+print(round(normalization.min(), 3).to_dict())
+print(round(normalization.max(), 3).to_dict())
+print(round(normalization.mean(), 3).to_dict())
+
+fix_all = pd.concat([remove_value[["수집시각", "구역"]], normalization], axis=1)
+fix_all.to_csv("정규화_멘티.csv", encoding="utf-8-sig", index=False)
+
+end = pd.read_csv("정규화_멘티.csv")
+print(end.shape)
+
+
 # ----------------------------------------
 # 문제 10. 구역 인코딩하고 저장하기
 # ----------------------------------------
@@ -207,3 +246,21 @@ print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 #       열 이름 목록을 대괄호에 넣으면 그 순서대로 열을 골라낼 수 있습니다.
 # 기대 출력: (179, 8) 0 0
 #            ['수집시각', '구역', '구역코드', 'CPU온도', '전력', '응답시간', '메모리', '상태']
+
+fix_all["구역코드"] = fix_all["구역"].replace(
+    {"Z1-알파": 0, "Z2-브라보": 1, "Z3-찰리": 2}
+)
+
+# 설비번호 삭제
+fix_all["상태"] = remove_value["상태"]
+df_result = fix_all[
+    ["수집시각", "구역", "구역코드", "CPU온도", "전력", "응답시간", "메모리", "상태"]
+]
+
+df_result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+
+read = pd.read_csv("정제결과_멘티.csv")
+# # 비어있는값 ,중복된 값 , 확인 해서 리스트 만들기
+
+# print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
+# print(read.columns.to_list())
