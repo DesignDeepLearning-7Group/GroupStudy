@@ -28,13 +28,16 @@ sensor_col = ["온도", "진동", "회전수", "압력"]
 #            str
 #            {'정상': 119, '주의': 62, '이상': 5}
 
-null_counts = df.isnull().sum()
-result = null_counts[null_counts > 0].to_dict()
+
+null_counts = df.isnull().sum()  # 결측 있는 거 확인 , 더한 값 = 개수 확인 용
+result = null_counts[
+    null_counts > 0
+].to_dict()  # 결측 있는것 (1개라도) 딕셔너리 형태로 만들기
 
 print(df.shape)
 print(result)
-print(type(df["진동"][0]).__name__)
-print(df["판정"].value_counts().to_dict())
+print(type(df["진동"][0]).__name__)  # 진동 열 첫값 자료형 확인
+print(df["판정"].value_counts().to_dict())  # 판정 값 개수 딕셔너리로 바꾸기
 
 # ----------------------------------------
 # 문제 2. 숫자로 저장되지 않은 열 고치기
@@ -44,8 +47,10 @@ print(df["판정"].value_counts().to_dict())
 # 기대 출력: 3
 #            4.19
 
-df["진동"] = pd.to_numeric(df["진동"], errors="coerce")
-null_counts = df["진동"].isnull().sum()
+df["진동"] = pd.to_numeric(
+    df["진동"], errors="coerce"
+)  # numeric 숫자로 못바꾸는거 결측으로 만들기
+null_counts = df["진동"].isnull().sum()  # 결측 수 확인
 
 print(null_counts)
 print(round(df["진동"].mean(), 2))
@@ -59,9 +64,11 @@ print(round(df["진동"].mean(), 2))
 # 기대 출력: 4
 #            (182, 8)
 
-df_modify = df.drop_duplicates().reset_index(drop=True)
+df_modify = df.drop_duplicates().reset_index(
+    drop=True
+)  # 중복지우기 , 인덱스 다시 만들기
 
-print(df.duplicated().sum())
+print(df.duplicated().sum())  # 중복확인
 print(df_modify.shape)
 
 # ----------------------------------------
@@ -74,14 +81,17 @@ print(df_modify.shape)
 # 기대 출력: 0
 #            84.4 5.48
 
+# 결측에 넣을 값 만들기
 temp = df_modify["온도"].mean().round(2)
 press = df_modify["압력"].median().round(2)
 vib = df_modify["진동"].mean().round(2)
 
+# 결측에 평균 , 중앙값 넣기
 df_modify["온도"] = df_modify["온도"].fillna(temp)
 df_modify["압력"] = df_modify["압력"].fillna(press)
 df_modify["진동"] = df_modify["진동"].fillna(vib)
 
+# 3열 결측값 확인하기
 print(df_modify[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
 print(round((temp), 2), round(press, 2))
 
@@ -97,7 +107,9 @@ print(round((temp), 2), round(press, 2))
 #            C라인   94.40  5.38  1751.33  7.08
 #            {'A라인': 60, 'B라인': 62, 'C라인': 60}
 
+# 생산라인(a,b,c가 있음) 기준으로 온도 진동 회전수 압력의 평균 구하기
 print(df_modify.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
+# 생산라인 기준으로 온도의 검사건수 확인하기
 print(df_modify.groupby("생산라인")["온도"].count().to_dict())
 
 # ----------------------------------------
@@ -108,10 +120,14 @@ print(df_modify.groupby("생산라인")["온도"].count().to_dict())
 # 기대 출력: 84.4 9.08
 #            0 0
 
+# z score 구하기
 z = (df_modify["온도"] - df_modify["온도"].mean()) / df_modify["온도"].std()
+# 이상값 확인
 abs(z) > 3, abs(z) > 2
 
+# 결측을 채워넣은 표에 평균 , 표준편착 구하기
 print(round(df_modify["온도"].mean(), 2), round(df_modify["온도"].std(ddof=0), 2))
+# 절대값으로 z score 확인하고 3넘고 2 넘는 개수 구하기
 print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 
 # ----------------------------------------
@@ -124,18 +140,22 @@ print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 #            3
 #            {'C라인': 3}
 
+# iqr 구하기
 q1 = df_modify["압력"].quantile(0.25)
 q3 = df_modify["압력"].quantile(0.75)
 
 iqr = round(q3 - q1, 2)
 
+# iqr울타리 만들기
 low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
 
+
 print(round(low, 2), round(high, 2))
+# iqr을 벗어난 값 확인하기
 print(df_modify["압력"][(df_modify["압력"] < low) | (df_modify["압력"] > high)].count())
 
 line = df_modify[(df_modify["압력"] < low) | (df_modify["압력"] > high)]
-
+# iqr벗어난 값들 생산라인 기준으로 압력(벗어난)값 개수구하고 딕셔너리로 만들기
 print(line.groupby("생산라인")["압력"].count().to_dict())
 
 # ----------------------------------------
@@ -153,7 +173,7 @@ df_result = df_modify.drop(line.index)
 
 # 인덱스 다시 매김
 df_result = df_result.reset_index(drop=True)
-
+# 결측만 채운 표 , 중복 제거한 표 값 개수 비교
 print(df_modify["생산라인"].value_counts().to_dict())
 print(df_result["생산라인"].value_counts().to_dict())
 print(df_result.shape)
@@ -171,7 +191,7 @@ print(df_result.shape)
 #            {'온도': 1.0, '진동': 1.0, '회전수': 1.0, '압력': 1.0}
 #            {'온도': 0.529, '진동': 0.494, '회전수': 0.495, '압력': 0.39}
 #            (179, 6)
-
+# 4개만 들어있는 표
 sensor = df_result[["온도", "진동", "회전수", "압력"]]
 minn = sensor.min()
 maxx = sensor.max()
@@ -203,18 +223,18 @@ print(end.shape)
 # 기대 출력: (179, 8) 0 0
 #            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
 
-# 한줄로나옴 (알아둬라)
+# repalce는 결과가 한줄로나와서 표에 넣어줘야함
 df_result["라인코드"] = df_result["생산라인"].replace(
     {"A라인": 0, "C라인": 2, "B라인": 1}
 )
 
-# 골라라
+# 설비번호 삭제
 df_result = df_result.drop(columns=["설비번호"])
-
+# 저장 하고 다시 읽어보기
 df_result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
 
 read = pd.read_csv("정제결과_멘티.csv")
-
+# 비어있는값 ,중복된 값 , 확인 해서 리스트 만들기
 print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
 print(read.columns.to_list())
 
