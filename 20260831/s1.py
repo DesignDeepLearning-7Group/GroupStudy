@@ -231,21 +231,21 @@ print(end.shape)
 #            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
 
 # 한줄로나옴 (알아둬라)
-b = result["생산라인"].replace({"A라인": 0, "C라인": 2, "B라인": 1})
+b = re["생산라인"].replace({"A라인": 0, "C라인": 2, "B라인": 1})
 
 # 원본에 넣기 열 만들어서 넣는거임
-result["라인코드"] = b
-print(result.head())
+re["라인코드"] = b
+print(re.head())
 
 # 골라라
 print(result.columns)
 # print(df.shape)
 # print(df_drop.shape)
 # print(result.shape)
-result["판정"] = df["판정"]
-print(result.head())
+re["판정"] = df["판정"]
+print(re.head())
 
-result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+re.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
 
 read = pd.read_csv("정제결과_멘티.csv")
 print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
@@ -293,7 +293,21 @@ key_col = ["검사일시", "생산라인", "설비번호"]
 #
 # [멘티에게 한 문장으로]
 #   "○○라인만 △행이 사라졌는데, 그 이유는 ..."
+origin_drop = origin.drop_duplicates()
+print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
+print(
+    f"origin_drop column: {origin_drop.columns.to_list()} menti column: {menti.columns.to_list()}"
+)
+print(f"origin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
+print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
 
+origin_degree = origin_drop.groupby("생산라인")["온도"].mean()
+menti_degree = menti.groupby("생산라인")["온도"].mean()
+diff_degree = origin_degree - menti_degree
+compare_degree = pd.DataFrame(
+    {"origin": origin_degree, "menti": menti_degree, "diff": diff_degree}
+)
+print(compare_degree.round(2))
 
 # ----------------------------------------
 # 문제 2. 완전히 같은 행만 중복이 아니다
