@@ -28,16 +28,13 @@ sensor_col = ["온도", "진동", "회전수", "압력"]
 #            str
 #            {'정상': 119, '주의': 62, '이상': 5}
 
-
-df = pd.read_csv("설비배치1.csv")
-# print(df.shape)
-# print(df.isnull().sum().to_dict())
 null_counts = df.isnull().sum()
 result = null_counts[null_counts > 0].to_dict()
-# print(result)
-# print(type(df["진동"][0]).__name__)
-# print(df["판정"].value_counts().to_dict())
 
+print(df.shape)
+print(result)
+print(type(df["진동"][0]).__name__)
+print(df["판정"].value_counts().to_dict())
 
 # ----------------------------------------
 # 문제 2. 숫자로 저장되지 않은 열 고치기
@@ -47,15 +44,11 @@ result = null_counts[null_counts > 0].to_dict()
 # 기대 출력: 3
 #            4.19
 
-
-# print(df["진동"].astype("float"))
-# print(null_counts)
-# print(df["진동"].isnull().sum())
 df["진동"] = pd.to_numeric(df["진동"], errors="coerce")
-# print(df["진동"].head())
 null_counts = df["진동"].isnull().sum()
-# print(null_counts)
-# print(round(df["진동"].mean(), 2))
+
+print(null_counts)
+print(round(df["진동"].mean(), 2))
 
 
 # ----------------------------------------
@@ -66,12 +59,10 @@ null_counts = df["진동"].isnull().sum()
 # 기대 출력: 4
 #            (182, 8)
 
-# print(df.drop_duplicates())
-# print(df.duplicated().sum())
-# print(df.index)
-df = df.drop_duplicates().reset_index(drop=True)
-# print(df.index)
-# print(df.shape)
+df_modify = df.drop_duplicates().reset_index(drop=True)
+
+print(df.duplicated().sum())
+print(df_modify.shape)
 
 # ----------------------------------------
 # 문제 4. 결측 채우기
@@ -83,20 +74,16 @@ df = df.drop_duplicates().reset_index(drop=True)
 # 기대 출력: 0
 #            84.4 5.48
 
-temp = df["온도"].mean()
-press = df["압력"].median()
-vib = df["진동"].mean()
+temp = df_modify["온도"].mean().round(2)
+press = df_modify["압력"].median().round(2)
+vib = df_modify["진동"].mean().round(2)
 
-df["온도"] = df["온도"].fillna(temp)
-df["압력"] = df["압력"].fillna(press)
-df["진동"] = df["진동"].fillna(vib)
+df_modify["온도"] = df_modify["온도"].fillna(temp)
+df_modify["압력"] = df_modify["압력"].fillna(press)
+df_modify["진동"] = df_modify["진동"].fillna(vib)
 
-# print(df[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
-
-# print(round((temp), 2), round(press, 2))
-
-# null_counts = df["온도"].isnull().sum()
-
+print(df_modify[["온도", "압력", "진동"]].isnull().sum().sum())  # 충격 복습해라
+print(round((temp), 2), round(press, 2))
 
 # ----------------------------------------
 # 문제 5. 생산라인별 요약
@@ -110,10 +97,8 @@ df["진동"] = df["진동"].fillna(vib)
 #            C라인   94.40  5.38  1751.33  7.08
 #            {'A라인': 60, 'B라인': 62, 'C라인': 60}
 
-# print(df.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
-# print(df.groupby("생산라인")["온도"].count().to_dict())
-# df.sort_values(by="생산라인", ascending=True)
-
+print(df_modify.groupby("생산라인")[["온도", "진동", "회전수", "압력"]].mean().round(2))
+print(df_modify.groupby("생산라인")["온도"].count().to_dict())
 
 # ----------------------------------------
 # 문제 6. z-점수로 온도 이상 찾기
@@ -123,13 +108,11 @@ df["진동"] = df["진동"].fillna(vib)
 # 기대 출력: 84.4 9.08
 #            0 0
 
-# 또포 공부해라
-# print(round(df["온도"].mean(), 2), round(df["온도"].std(ddof=0), 2))
-z = (df["온도"] - df["온도"].mean()) / df["온도"].std()
+z = (df_modify["온도"] - df_modify["온도"].mean()) / df_modify["온도"].std()
 abs(z) > 3, abs(z) > 2
 
-# print((abs(z) > 3).sum(), (abs(z) > 2).sum())
-
+print(round(df_modify["온도"].mean(), 2), round(df_modify["온도"].std(ddof=0), 2))
+print((abs(z) > 3).sum(), (abs(z) > 2).sum())
 
 # ----------------------------------------
 # 문제 7. IQR로 압력 이상 찾기
@@ -141,22 +124,19 @@ abs(z) > 3, abs(z) > 2
 #            3
 #            {'C라인': 3}
 
-q1 = df["압력"].quantile(0.25)
-q3 = df["압력"].quantile(0.75)
+q1 = df_modify["압력"].quantile(0.25)
+q3 = df_modify["압력"].quantile(0.75)
 
 iqr = round(q3 - q1, 2)
-# print(iqr)
 
 low, high = q1 - 1.5 * iqr, q3 + 1.5 * iqr
 
-# print(round(low, 2), round(high, 2))
-# print(df["압력"][(df["압력"] < low) | (df["압력"] > high)].count())  # 찾아보세요
+print(round(low, 2), round(high, 2))
+print(df_modify["압력"][(df_modify["압력"] < low) | (df_modify["압력"] > high)].count())
 
-# print(df["생산라인"][(df["압력"] < low) | (df["압력"] > high)])
-line = df[(df["압력"] < low) | (df["압력"] > high)]
+line = df_modify[(df_modify["압력"] < low) | (df_modify["압력"] > high)]
 
-# line ='압력기준으로' 범위 벗어난것을 '생산라인'으로 group하고 센다음에 딕셔너리 형태로 만들기!
-# print(line.groupby("생산라인")["압력"].count().to_dict())
+print(line.groupby("생산라인")["압력"].count().to_dict())
 
 # ----------------------------------------
 # 문제 8. 이상으로 판정된 행 제거
@@ -169,16 +149,14 @@ line = df[(df["압력"] < low) | (df["압력"] > high)]
 #            (179, 8)
 
 # 제거 하기
-# print(line)
-df_drop = df.drop(line.index)
+df_result = df_modify.drop(line.index)
 
-df["생산라인"].value_counts().to_dict()
 # 인덱스 다시 매김
-re = df_drop.reset_index(drop=True)
+df_result = df_result.reset_index(drop=True)
 
-# print(df["생산라인"].value_counts().to_dict())
-# print(re["생산라인"].value_counts().to_dict())
-# print(re.shape)
+print(df_modify["생산라인"].value_counts().to_dict())
+print(df_result["생산라인"].value_counts().to_dict())
+print(df_result.shape)
 
 
 # ----------------------------------------
@@ -194,26 +172,21 @@ re = df_drop.reset_index(drop=True)
 #            {'온도': 0.529, '진동': 0.494, '회전수': 0.495, '압력': 0.39}
 #            (179, 6)
 
-sensor = re[["온도", "진동", "회전수", "압력"]]
+sensor = df_result[["온도", "진동", "회전수", "압력"]]
 minn = sensor.min()
 maxx = sensor.max()
+
 # 정규화 시키기
 form = round((sensor - minn) / (maxx - minn), 4)
-# print(form.dtypes, "ss")
-# # 한번에 to_dict()로 변경하면 튜플로 봐서 오류남 하나씩 해줘야함
 
+# print(df_normal.head())
+print(round(form.min(), 3).to_dict())
+print(round(form.max(), 3).to_dict())
+print(round(form.mean(), 3).to_dict())
 
-# a = pd.concat([df[["검사일시", "생산라인"]], form], axis=1)
-# print(a.head())
-print(
-    round(form.min(), 3).to_dict(),
-    round(form.max(), 3).to_dict(),
-    round(form.mean(), 3).to_dict(),
-)
-
-# # 결측아닌것도 구해야해서 concat으로 합쳐줌
-result = pd.concat([re[["검사일시", "생산라인"]], form], axis=1)
-result.to_csv("정규화_멘티.csv", index=False)
+# 결측아닌것도 구해야해서 concat으로 합쳐줌
+df_normal = pd.concat([df_result[["검사일시", "생산라인"]], form], axis=1)
+df_normal.to_csv("정규화_멘티.csv", index=False)
 
 end = pd.read_csv("정규화_멘티.csv")
 print(end.shape)
@@ -231,23 +204,17 @@ print(end.shape)
 #            ['검사일시', '생산라인', '라인코드', '온도', '진동', '회전수', '압력', '판정']
 
 # 한줄로나옴 (알아둬라)
-b = re["생산라인"].replace({"A라인": 0, "C라인": 2, "B라인": 1})
-
-# 원본에 넣기 열 만들어서 넣는거임
-re["라인코드"] = b
-print(re.head())
+df_result["라인코드"] = df_result["생산라인"].replace(
+    {"A라인": 0, "C라인": 2, "B라인": 1}
+)
 
 # 골라라
-print(result.columns)
-# print(df.shape)
-# print(df_drop.shape)
-# print(result.shape)
-re["판정"] = df["판정"]
-print(re.head())
+df_result = df_result.drop(columns=["설비번호"])
 
-re.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
+df_result.to_csv("정제결과_멘티.csv", index=False, encoding="utf-8-sig")
 
 read = pd.read_csv("정제결과_멘티.csv")
+
 print(read.shape, read.isnull().sum().sum(), read.duplicated().sum())
 print(read.columns.to_list())
 
@@ -293,21 +260,22 @@ key_col = ["검사일시", "생산라인", "설비번호"]
 #
 # [멘티에게 한 문장으로]
 #   "○○라인만 △행이 사라졌는데, 그 이유는 ..."
-origin_drop = origin.drop_duplicates()
-print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
-print(
-    f"origin_drop column: {origin_drop.columns.to_list()} menti column: {menti.columns.to_list()}"
-)
-print(f"origin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
-print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
 
-origin_degree = origin_drop.groupby("생산라인")["온도"].mean()
-menti_degree = menti.groupby("생산라인")["온도"].mean()
-diff_degree = origin_degree - menti_degree
-compare_degree = pd.DataFrame(
-    {"origin": origin_degree, "menti": menti_degree, "diff": diff_degree}
-)
-print(compare_degree.round(2))
+# origin_drop = origin.drop_duplicates()
+# print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
+# print(
+#     f"origin_drop column: {origin_drop.columns.to_list()} menti column: {menti.columns.to_list()}"
+# )
+# print(f"origin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
+# print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
+
+# origin_degree = origin_drop.groupby("생산라인")["온도"].mean()
+# menti_degree = menti.groupby("생산라인")["온도"].mean()
+# diff_degree = origin_degree - menti_degree
+# compare_degree = pd.DataFrame(
+#     {"origin": origin_degree, "menti": menti_degree, "diff": diff_degree}
+# )
+# print(compare_degree.round(2))
 
 # ----------------------------------------
 # 문제 2. 완전히 같은 행만 중복이 아니다
