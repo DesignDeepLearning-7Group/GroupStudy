@@ -281,21 +281,49 @@ key_col = ["검사일시", "생산라인", "설비번호"]
 # [멘티에게 한 문장으로]
 #   "○○라인만 △행이 사라졌는데, 그 이유는 ..."
 
-# origin_drop = origin.drop_duplicates()
-# print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
-# print(
-#     f"origin_drop column: {origin_drop.columns.to_list()} menti column: {menti.columns.to_list()}"
-# )
-# print(f"origin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
-# print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
+origin_drop = origin.drop_duplicates()
+print(f"origin: {origin.shape} origin drop: {origin_drop.shape} menti: {menti.shape}")
+print(
+    f"origin_drop column: {origin_drop.columns.to_list()}\nmenti column: {menti.columns.to_list()}"
+)
+print(f"\norigin_drop 생산라인 \n {origin_drop['생산라인'].value_counts()}")
+print(f"menti 생산라인 \n {menti['생산라인'].value_counts()}")
+# origin_drop 생산라인
+#  생산라인
+# B라인    62
+# A라인    60
+# C라인    60
+# Name: count, dtype: int64
+# menti 생산라인
+#  생산라인
+# B라인    62
+# A라인    60
+# C라인    57
+# Name: count, dtype: int64
+#   - 라인 하나에서만 행이 줄었다. 어느 라인이고 몇 행인가
+# C라인 60 => 57로 변경
+#   - 세 라인의 행 수가 처음부터 60개씩 균등하지 않다. 이건 또 다른 문제의 신호다
 
-# origin_degree = origin_drop.groupby("생산라인")["온도"].mean()
-# menti_degree = menti.groupby("생산라인")["온도"].mean()
-# diff_degree = origin_degree - menti_degree
-# compare_degree = pd.DataFrame(
-#     {"origin": origin_degree, "menti": menti_degree, "diff": diff_degree}
-# )
-# print(compare_degree.round(2))
+print("\n온도 null : ", origin_drop["온도"].isnull().sum())
+# 온도 null :  6
+
+origin_degree = origin_drop.dropna(subset=["온도"]).groupby("생산라인")["온도"].mean()
+menti_degree = menti.groupby("생산라인")["온도"].mean()
+diff_degree = origin_degree - menti_degree
+compare_degree = pd.DataFrame(
+    {"origin": origin_degree, "menti": menti_degree, "diff": diff_degree}
+)
+print("\n", compare_degree.round(2))
+#        origin  menti  diff
+# 생산라인
+# A라인    73.35  73.90 -0.55
+# B라인    84.89  84.88  0.02
+# C라인    94.57  94.34  0.23
+#   - 라인 하나에서 온도 평균이 0.5도 이상 올라갔다. 어느 라인이고 얼마인가
+# A라인 -0.55의 차이
+
+#   "○○라인만 △행이 사라졌는데, 그 이유는 ..."
+# C라인만 3행 사라짐 압력에서 1.5*iqr범위에서 범어난 행 삭제
 
 # ----------------------------------------
 # 문제 2. 완전히 같은 행만 중복이 아니다
@@ -313,7 +341,6 @@ key_col = ["검사일시", "생산라인", "설비번호"]
 #
 # [멘티에게 한 문장으로]
 #   "값이 0.03 다르면 컴퓨터는 다른 행으로 보지만, 현실에서는 ..."
-
 
 # ----------------------------------------
 # 문제 3. 이상 탐지를 다시 한다
